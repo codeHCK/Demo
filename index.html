@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>M.B.Rai Investigation Agency</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #00ff00;
+      text-shadow: 0 0 5px #0f0;
+      animation: blink 1s step-end infinite alternate;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    input, button {
+      background: black;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px 0;
+      width: 100%;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    pre {
+      background-color: #111;
+      padding: 20px;
+      border: 1px solid #00ff00;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 400px;
+      margin-top: 20px;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      background-color: #00ff00;
+      animation: blink 0.7s steps(1) infinite;
+    }
+
+    #mainApp {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>M.B.Rai Investigation Agency <span class="cursor">&nbsp;</span></h1>
+
+  <div id="loginForm">
+    <input type="text" id="username" placeholder="Username" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button onclick="login()">> Login</button>
+    <button onclick="resetCredentials()">> Reset Password (Master Only)</button>
+    <pre id="loginResult">Access required...</pre>
+  </div>
+
+  <div id="mainApp">
+    <form id="searchForm">
+      <input type="text" id="query" placeholder="Enter mobile / email / name" required />
+      <button type="submit">> Execute</button>
+    </form>
+    <pre id="result">Awaiting input...</pre>
+  </div>
+
+  <script>
+    const MASTER_PASSWORD = "mbrai2024";
+
+    let storedUsername = localStorage.getItem("username") || "admin";
+    let storedPassword = localStorage.getItem("password") || "investigate";
+
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const result = document.getElementById("loginResult");
+
+      if (user === storedUsername && pass === storedPassword) {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+      } else {
+        result.textContent = "[-] Unauthorized access!";
+      }
+    }
+
+    function resetCredentials() {
+      const master = prompt("Enter master password:");
+      if (master === MASTER_PASSWORD) {
+        const newUser = prompt("Enter new username:");
+        const newPass = prompt("Enter new password:");
+        if (newUser && newPass) {
+          localStorage.setItem("username", newUser);
+          localStorage.setItem("password", newPass);
+          alert("Login credentials updated.");
+        }
+      } else {
+        alert("Invalid master password!");
+      }
+    }
+
+    document.getElementById("searchForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const query = document.getElementById("query").value;
+      document.getElementById("result").textContent = "[+] Query sent: " + query + "\n[~] Fetching data...";
+
+      const res = await fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+
+      const data = await res.json();
+      document.getElementById("result").textContent = "[+] Results for: " + query + "\n\n" + JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>
